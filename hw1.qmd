@@ -1,0 +1,46 @@
+---
+title: "hw1"
+format: html
+editor: visual
+---
+
+# Problem 1 - Abalone Data
+
+## a. Import the data into a data.frame in R. Use the information in the “abalone.names” file to give appropriate column names.
+
+
+```{r}
+data_file <- "D:/A_umich/STATS506/hw1_data/abalone.data"
+
+col_names <- c("Sex", "Length", "Diameter", "Height", "Whole_weight", "Shucked_weight", "Viscera_weight", "Shell_weight", "Rings")
+
+abalone <- read.csv(data_file, header = FALSE, col.names = col_names)
+
+saveRDS(abalone, file = "abalone.rds")
+abalone2 <- readRDS("abalone.rds")
+```
+
+## b. Report the number of observations belonging to each sex:
+
+```{r}
+table(abalone2$Sex)
+```
+
+## c.
+
+1.Which weight has the highest correlation with rings?
+
+```{r}
+# Calculate correlations
+weights <- c("Whole_weight", "Shucked_weight", "Viscera_weight", "Shell_weight")
+correlations <- sapply(weights, function(w) cor(abalone2[[w]], abalone2$Rings))
+
+# Show all correlations
+correlations
+
+# Find which weight has the maximum absolute correlation
+most_correlated_weight <- names(which.max(abs(correlations)))
+most_correlated_value <- correlations[most_correlated_weight]
+
+cat(sprintf("The weight variable with the highest correlation with Rings is '%s' (correlation = %.3f).\n", most_correlated_weight, most_correlated_value))
+```
