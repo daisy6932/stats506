@@ -10,7 +10,7 @@ editor: visual
 
 
 ```{r}
-data_file <- "D:/A_umich/STATS506/hw1_data/abalone.data"
+data_file <- "abalone.data"
 
 col_names <- c("Sex", "Length", "Diameter", "Height", "Whole_weight", "Shucked_weight", "Viscera_weight", "Shell_weight", "Rings")
 
@@ -43,4 +43,31 @@ most_correlated_weight <- names(which.max(abs(correlations)))
 most_correlated_value <- correlations[most_correlated_weight]
 
 cat(sprintf("The weight variable with the highest correlation with Rings is '%s' (correlation = %.3f).\n", most_correlated_weight, most_correlated_value))
+```
+2.For that weight, which sex has the highest correlation?
+
+```{r}
+#get unique sex categories from the data
+sexes <- unique(abalone2$Sex) 
+
+#For each sex, calculate the correlation between the most correlated weight and Rings
+cor_by_sex <- sapply(sexes, function(sex){
+  idx <- abalone2$Sex == sex   
+  cor(abalone2[[most_correlated_weight]][idx], abalone2$Rings[idx], use = "complete.obs")
+})
+
+#Name the correlation results according to sex
+names(cor_by_sex) <- sexes
+
+print(cor_by_sex)
+
+#Find the sex category with the highest absolute correlation
+most_corr_sex <- names(which.max(abs(cor_by_sex)))
+most_corr_value <- cor_by_sex[most_corr_sex]
+
+#Print a summary snetence with the results
+cat(sprintf(
+  "For '%s', the sex with the highest correlation with Rings is '%s' (correlation = %.3f).\n",
+  most_correlated_weight, most_corr_sex, most_corr_value
+))
 ```
