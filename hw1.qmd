@@ -71,3 +71,230 @@ cat(sprintf(
   most_correlated_weight, most_corr_sex, most_corr_value
 ))
 ```
+3.What are the weights of the abalone with the most rings?
+
+```{r}
+#Find the largest value in Rings column
+max_rings <- max(abalone2$Rings, na.rm = TRUE)
+#Extract all rows where Rings equals this maximum value
+abalone_max <- abalone2[abalone2$Rings == max_rings, ]
+#List of the weight columns
+weight_cols <- c("Whole_weight", "Shucked_weight", "Viscera_weight", "Shell_weight")
+#Print a summary statement
+cat(sprintf("The maximum number of rings is %d.\n", max_rings))
+cat("Weights of abalone specimen(s) with the most rings:\n\n")
+
+for (i in seq_len(nrow(abalone_max))) {
+  cat(sprintf("Specimen %d:\n", i))
+  for (col in weight_cols) {
+    cat(sprintf("  %s: %.4f\n", col, abalone_max[i, col]))
+  }
+  cat("\n")
+}
+```
+
+4.What percentage of abalones have a viscera weight larger than their shell weight?
+```{r}
+#create a logical vector for the condition
+cond <- abalone2$Viscera_weight > abalone2$Shell_weight
+
+#count how many true
+num <- sum(cond, na.rm = TRUE)
+
+#Total number of abalone (rows)
+total <- sum(!is.na(abalone2$Viscera_weight) & !is.na(abalone2$Shell_weight))
+
+#calculate the percentage
+percentage <- num / total * 100
+
+#print
+cat(sprintf("Percentage of abalones with Viscera_weight larger than Shell_weight: %.2f%%\n", percentage))
+```
+
+## d
+Create an R table showing the correlation between each weight variable and Rings, stratified by Sex.
+```{r}
+weights <- c("Whole_weight", "Shucked_weight", "Viscera_weight", "Shell_weight")
+sexes <- unique(abalone2$Sex)
+
+#Create an empty matrix to store correlations
+corr_table <- matrix(nrow = length(sexes), ncol = length(weights))
+rownames(corr_table) <- sexes
+colnames(corr_table) <- weights
+
+for (i in seq_along(sexes)) {
+  sex <- sexes[i]
+  subset <- abalone2[abalone2$Sex == sex, ]
+  for (j in seq_along(weights)) {
+    w <- weights[j]
+    corr_table[i, j] <- cor(subset[[w]], subset$Rings, use = "complete.obs")
+  }
+}
+
+#Print
+cat("Correlation between abalone weights and rings, grouped by sex:\n")
+print(round(corr_table, 3))
+```
+
+## e
+```{r}
+# Extract vectors for each sex
+rings_F <- abalone$Rings[abalone$Sex == "F"]
+rings_M <- abalone$Rings[abalone$Sex == "M"]
+rings_I <- abalone$Rings[abalone$Sex == "I"]
+
+# t-tests
+cat("\nFemale vs Male\n")
+t1 <- t.test(rings_F, rings_M)
+print(t1)
+
+cat("\nFemale vs Infant\n")
+t2 <- t.test(rings_F, rings_I)
+print(t2)
+
+cat("\nMale vs Infant\n")
+t3 <- t.test(rings_M, rings_I)
+print(t3)
+
+# Manually calculate t-statistic and p-value (two-sample, unequal variance)
+mean_F <- mean(rings_F)
+mean_M <- mean(rings_M)
+sd_F <- sd(rings_F)
+sd_M <- sd(rings_M)
+n_F <- length(rings_F)
+n_M <- length(rings_M)
+
+# t statistic formula (Welch's t-test):
+t_stat <- (mean_F - mean_M) / sqrt(sd_F^2/n_F + sd_M^2/n_M)
+
+# Degrees of freedom (Welch-Satterthwaite equation)
+df <- (sd_F^2/n_F + sd_M^2/n_M)^2 / ((sd_F^2/n_F)^2/(n_F-1) + (sd_M^2/n_M)^2/(n_M-1))
+
+# Two-sided p-value
+p_val <- 2 * pt(-abs(t_stat), df)
+
+cat(sprintf(
+  "\nManual calculation (Female vs Male):\nt = %.3f, df = %.1f, p-value = %.4f\n",
+  t_stat, df, p_val
+))
+```
+
+# Problem 2 - Food Expenditure Data
+
+```{r}
+#Import the csv file
+food_raw <- read.csv("food_expenditure.csv", stringsAsFactors = FALSE)
+
+colnames(food_raw) <- c(
+  "id",
+  "age",
+  "household_others",
+  "state",
+  "currency",
+  "food_total",
+  "food_grocery",
+  "food_dining_out",
+  "food_misc",
+  "n_dined_out",
+  "includes_alcohol",
+  "food_assistance"
+)
+
+n_before <- nrow(food_raw)
+food_usd <- subset(food_raw, currency == "USD")
+n_after <- nrow(food_usd)
+
+cat(sprintf("Number of observations before restricting: %d\n", n_before))
+cat(sprintf("Number of observations after restricting to USD: %d\n", n_after))
+
+# A: Age exclusion
+food_usd <- subset(food_usd, age >= 18 & age <= 120)
+
+# B: State exclusion
+us_states <- state.abb
+food_usd <- subset(food_usd, state %in% us_states)
+
+# C: Food expenditures
+food_vars <- c("food_total", "food_grocery", "food_dining_out", "food_misc")
+for (v in food_vars) food_usd[[v]] <- as.numeric(as.character(food_usd[[v]]))
+food_usd <- subset(food_usd, 
+                   !is.na(food_total) & food_total >= 0 & food_total < 2000 &
+                   !is.na(food_grocery) & food_grocery >= 0 & food_grocery < 2000 &
+                   !is.na(food_dining_out) & food_dining_out >= 0 & food_dining_out < 2000 &
+                   !is.na(food_misc) & food_misc >= 0 & food_misc < 2000)
+
+# D: Dining out times
+food_usd$n_dined_out <- as.numeric(as.character(food_usd$n_dined_out))
+food_usd <- subset(food_usd, !is.na(n_dined_out) & n_dined_out >= 0 & n_dined_out <= 40)
+
+cat(sprintf("Final number of observations after cleaning: %d\n", nrow(food_usd)))
+```
+
+# Problem 3 - Collatz conjecture
+##a
+```{r}
+nextCollatz <- function(n) {
+  # Input validation
+  if (length(n) != 1 || !is.numeric(n) || n != as.integer(n) || n < 1) {
+    stop("Input must be a single positive integer.")
+  }
+  n <- as.integer(n)
+  if (n %% 2 == 0) {
+    return(n / 2)
+  } else {
+    return(3 * n + 1)
+  }
+}
+```
+```{r}
+nextCollatz(5)
+nextCollatz(16)
+```
+
+##b
+```{r}
+collatzSequence <- function(n) {
+  if (length(n) != 1 || !is.numeric(n) || n != as.integer(n) || n < 1) {
+    stop("Input must be a single positive integer.")
+  }
+  n <- as.integer(n)
+  seq <- n
+  while (tail(seq, 1) != 1) {
+    seq <- c(seq, nextCollatz(tail(seq, 1)))
+  }
+  return(list(sequence = seq, length = length(seq)))
+}
+```
+```{r}
+collatzSequence(5)
+collatzSequence(19)
+```
+
+##c
+```{r}
+# Initialize vectors to store lengths and starting values
+start_values <- 100:500
+seq_lengths <- integer(length(start_values))
+
+# Loop over each possible starting value
+for (i in seq_along(start_values)) {
+  seq_lengths[i] <- collatzSequence(start_values[i])$length
+}
+
+seq_lengths <- sapply(100:500, function(n) collatzSequence(n)$length)
+min_start <- which.min(seq_lengths) + 99
+max_start <- which.max(seq_lengths) + 99
+
+min_length <- seq_lengths[which.min(seq_lengths)]
+max_length <- seq_lengths[which.max(seq_lengths)]
+
+cat(sprintf("Shortest sequence: starts at %d, length = %d\n", min_start, min_length))
+cat(sprintf("Longest sequence: starts at %d, length = %d\n", max_start, max_length))
+```
+```{r}
+cat("Shortest sequence:\n")
+print(collatzSequence(min_start)$sequence)
+
+cat("Longest sequence:\n")
+print(collatzSequence(max_start)$sequence)
+```
