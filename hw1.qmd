@@ -2,12 +2,13 @@
 title: "hw1"
 format: html
 editor: visual
+Author: Daixi Huang
+Github: https://github.com/daisy6932/stats506
 ---
 
 # Problem 1 - Abalone Data
 
 ## a. Import the data into a data.frame in R. Use the information in the “abalone.names” file to give appropriate column names.
-
 
 ```{r}
 data_file <- "abalone.data"
@@ -44,6 +45,7 @@ most_correlated_value <- correlations[most_correlated_weight]
 
 cat(sprintf("The weight variable with the highest correlation with Rings is '%s' (correlation = %.3f).\n", most_correlated_weight, most_correlated_value))
 ```
+
 2.For that weight, which sex has the highest correlation?
 
 ```{r}
@@ -71,6 +73,7 @@ cat(sprintf(
   most_correlated_weight, most_corr_sex, most_corr_value
 ))
 ```
+
 3.What are the weights of the abalone with the most rings?
 
 ```{r}
@@ -94,6 +97,7 @@ for (i in seq_len(nrow(abalone_max))) {
 ```
 
 4.What percentage of abalones have a viscera weight larger than their shell weight?
+
 ```{r}
 #create a logical vector for the condition
 cond <- abalone2$Viscera_weight > abalone2$Shell_weight
@@ -112,7 +116,9 @@ cat(sprintf("Percentage of abalones with Viscera_weight larger than Shell_weight
 ```
 
 ## d
+
 Create an R table showing the correlation between each weight variable and Rings, stratified by Sex.
+
 ```{r}
 weights <- c("Whole_weight", "Shucked_weight", "Viscera_weight", "Shell_weight")
 sexes <- unique(abalone2$Sex)
@@ -137,6 +143,7 @@ print(round(corr_table, 3))
 ```
 
 ## e
+
 ```{r}
 # Extract vectors for each sex
 rings_F <- abalone$Rings[abalone$Sex == "F"]
@@ -231,7 +238,9 @@ cat(sprintf("Final number of observations after cleaning: %d\n", nrow(food_usd))
 ```
 
 # Problem 3 - Collatz conjecture
+
 ##a
+
 ```{r}
 nextCollatz <- function(n) {
   # Input validation
@@ -246,12 +255,14 @@ nextCollatz <- function(n) {
   }
 }
 ```
+
 ```{r}
 nextCollatz(5)
 nextCollatz(16)
 ```
 
 ##b
+
 ```{r}
 collatzSequence <- function(n) {
   if (length(n) != 1 || !is.numeric(n) || n != as.integer(n) || n < 1) {
@@ -265,12 +276,14 @@ collatzSequence <- function(n) {
   return(list(sequence = seq, length = length(seq)))
 }
 ```
+
 ```{r}
 collatzSequence(5)
 collatzSequence(19)
 ```
 
 ##c
+
 ```{r}
 # Initialize vectors to store lengths and starting values
 start_values <- 100:500
@@ -291,6 +304,7 @@ max_length <- seq_lengths[which.max(seq_lengths)]
 cat(sprintf("Shortest sequence: starts at %d, length = %d\n", min_start, min_length))
 cat(sprintf("Longest sequence: starts at %d, length = %d\n", max_start, max_length))
 ```
+
 ```{r}
 cat("Shortest sequence:\n")
 print(collatzSequence(min_start)$sequence)
