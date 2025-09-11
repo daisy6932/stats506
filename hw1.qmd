@@ -11,40 +11,45 @@ Github: https://github.com/daisy6932/stats506
 ## a. Import the data into a data.frame in R. Use the information in the “abalone.names” file to give appropriate column names.
 
 ```{r}
-data_file <- "abalone.data"
-
-col_names <- c("Sex", "Length", "Diameter", "Height", "Whole_weight", "Shucked_weight", "Viscera_weight", "Shell_weight", "Rings")
-
-abalone <- read.csv(data_file, header = FALSE, col.names = col_names)
-
+#First import: Read abalone data from the CVS file, with no header
+abalone <- read.csv("abalone.data", header = FALSE)
+# Assign column names based on the abalone.names file
+col_names(abalone) <- c("Sex", "Length", "Diameter", "Height", "Whole_weight", "Shucked_weight", "Viscera_weight", "Shell_weight", "Rings")
+# Save the abalone data frame to an RDS file
 saveRDS(abalone, file = "abalone.rds")
+# In a new R session or script: Quickly reload the abalone data frame from the RDS file
 abalone2 <- readRDS("abalone.rds")
 ```
 
 ## b. Report the number of observations belonging to each sex:
 
 ```{r}
-table(abalone2$Sex)
+# Count the number of abalone observations in each sex category
+sex_counts <- table(abalone2$Sex)
+print(sex_counts)
 ```
+Interpretation:
+There are 1528 males, 1342 infants, and 1307 females in the dataset.
 
 ## c.
 
 1.Which weight has the highest correlation with rings?
 
 ```{r}
-# Calculate correlations
+# Calculate correlations for each weight variable with Rings
 weights <- c("Whole_weight", "Shucked_weight", "Viscera_weight", "Shell_weight")
 correlations <- sapply(weights, function(w) cor(abalone2[[w]], abalone2$Rings))
+print(correlations)
 
-# Show all correlations
-correlations
 
 # Find which weight has the maximum absolute correlation
-most_correlated_weight <- names(which.max(abs(correlations)))
-most_correlated_value <- correlations[most_correlated_weight]
+max_corr_weight <- names(which.max(abs(correlations)))
+max_corr_value <- correlations[max_corr_weight]
 
-cat(sprintf("The weight variable with the highest correlation with Rings is '%s' (correlation = %.3f).\n", most_correlated_weight, most_correlated_value))
+cat(sprintf("The weight variable with the highest correlation with Rings is '%s' (correlation = %.3f).\n", max_corr_weight, max_corr_value))
 ```
+Interpretation:
+The variable Shell_weight has the highest correlation with Rings(correlation = 0.628). This suggests Shell_weight has the strongest linear relationship with the number of rings among the four weight measurements.
 
 2.For that weight, which sex has the highest correlation?
 
@@ -55,24 +60,24 @@ sexes <- unique(abalone2$Sex)
 #For each sex, calculate the correlation between the most correlated weight and Rings
 cor_by_sex <- sapply(sexes, function(sex){
   idx <- abalone2$Sex == sex   
-  cor(abalone2[[most_correlated_weight]][idx], abalone2$Rings[idx], use = "complete.obs")
+  cor(abalone2[[most_correlated_weight]][idx], abalone2$Rings[idx])
 })
 
-#Name the correlation results according to sex
+#Name and print the correlation results according to sex
 names(cor_by_sex) <- sexes
-
 print(cor_by_sex)
 
 #Find the sex category with the highest absolute correlation
 most_corr_sex <- names(which.max(abs(cor_by_sex)))
-most_corr_value <- cor_by_sex[most_corr_sex]
+most_corr_sex_value <- cor_by_sex[most_corr_sex]
 
-#Print a summary snetence with the results
 cat(sprintf(
   "For '%s', the sex with the highest correlation with Rings is '%s' (correlation = %.3f).\n",
-  most_correlated_weight, most_corr_sex, most_corr_value
+  most_correlated_weight, most_corr_sex, most_corr_sex_value
 ))
 ```
+Interpretation:
+Among the three sexes, the correlation between Shell_weight and Rings is highest for group I, with a correlation of 0.725. This indicates that, for I, Shell_weight is especially closely related to the ring count.
 
 3.What are the weights of the abalone with the most rings?
 
@@ -95,6 +100,8 @@ for (i in seq_len(nrow(abalone_max))) {
   cat("\n")
 }
 ```
+Interpretation:
+Read out the actual weight values from the above table.
 
 4.What percentage of abalones have a viscera weight larger than their shell weight?
 
@@ -123,11 +130,12 @@ Create an R table showing the correlation between each weight variable and Rings
 weights <- c("Whole_weight", "Shucked_weight", "Viscera_weight", "Shell_weight")
 sexes <- unique(abalone2$Sex)
 
-#Create an empty matrix to store correlations
+# Initialize correlation table
 corr_table <- matrix(nrow = length(sexes), ncol = length(weights))
 rownames(corr_table) <- sexes
 colnames(corr_table) <- weights
 
+# Calculate correlations within each sex group
 for (i in seq_along(sexes)) {
   sex <- sexes[i]
   subset <- abalone2[abalone2$Sex == sex, ]
@@ -141,7 +149,8 @@ for (i in seq_along(sexes)) {
 cat("Correlation between abalone weights and rings, grouped by sex:\n")
 print(round(corr_table, 3))
 ```
-
+Interpretation:
+The table above shows the Pearson correlation coefficients between each weight measurement and the number of rings, calculated within each sex group. Rows correspond to sexes and columns to the four weight variables. Each cell indicates the strength and direction of the linear relationship between the given weight and rings, within that sex group.
 ## e
 
 ```{r}
@@ -179,12 +188,43 @@ df <- (sd_F^2/n_F + sd_M^2/n_M)^2 / ((sd_F^2/n_F)^2/(n_F-1) + (sd_M^2/n_M)^2/(n_
 
 # Two-sided p-value
 p_val <- 2 * pt(-abs(t_stat), df)
-
 cat(sprintf(
   "\nManual calculation (Female vs Male):\nt = %.3f, df = %.1f, p-value = %.4f\n",
   t_stat, df, p_val
 ))
+
+## Female vs Infant
+mean_F <- mean(rings_F)
+mean_I <- mean(rings_I)
+sd_F <- sd(rings_F)
+sd_I <- sd(rings_I)
+n_F <- length(rings_F)
+n_I <- length(rings_I)
+
+t_stat_FI <- (mean_F - mean_I) / sqrt(sd_F^2/n_F + sd_I^2/n_I)
+df_FI <- (sd_F^2/n_F + sd_I^2/n_I)^2 / ((sd_F^2/n_F)^2/(n_F-1) + (sd_I^2/n_I)^2/(n_I-1))
+p_val_FI <- 2 * pt(-abs(t_stat_FI), df_FI)
+cat(sprintf("Manual t-test (Female vs Infant): t = %.3f, df = %.1f, p-value = %.4f\n", 
+            t_stat_FI, df_FI, p_val_FI))
+
+
+## Male vs Infant
+mean_M <- mean(rings_M)
+mean_I <- mean(rings_I)
+sd_M <- sd(rings_M)
+sd_I <- sd(rings_I)
+n_M <- length(rings_M)
+n_I <- length(rings_I)
+
+t_stat_MI <- (mean_M - mean_I) / sqrt(sd_M^2/n_M + sd_I^2/n_I)
+df_MI <- (sd_M^2/n_M + sd_I^2/n_I)^2 / ((sd_M^2/n_M)^2/(n_M-1) + (sd_I^2/n_I)^2/(n_I-1))
+p_val_MI <- 2 * pt(-abs(t_stat_MI), df_MI)
+cat(sprintf("Manual t-test (Male vs Infant): t = %.3f, df = %.1f, p-value = %.4f\n", 
+            t_stat_MI, df_MI, p_val_MI))
 ```
+Interpretation:
+The manual t-test calculations for Female vs Infant and Male vs Infant groups use the Welch’s formula for the t-statistic, degrees of freedom, and p-value. The results are consistent with R’s built-in t.test() function:
+For each pair, the t statistic, degrees of freedom, and p-value quantify if there is a statistically significant difference in the mean number of rings between the two groups. If the p-value is below 0.05, the difference is considered significant.
 
 # Problem 2 - Food Expenditure Data
 
@@ -192,6 +232,7 @@ cat(sprintf(
 #Import the csv file
 food_raw <- read.csv("food_expenditure.csv", stringsAsFactors = FALSE)
 
+# Rename columns to simple, convenient names
 colnames(food_raw) <- c(
   "id",
   "age",
@@ -207,21 +248,27 @@ colnames(food_raw) <- c(
   "food_assistance"
 )
 
+# Row count before restriction
 n_before <- nrow(food_raw)
+# Restrict to respondents reporting in US dollars
 food_usd <- subset(food_raw, currency == "USD")
 n_after <- nrow(food_usd)
 
 cat(sprintf("Number of observations before restricting: %d\n", n_before))
 cat(sprintf("Number of observations after restricting to USD: %d\n", n_after))
 
-# A: Age exclusion
+#Data cleaning by variable, with rules and code
+# A: Age exclusion 
+# Rule: "Exclude all respondents under age 18 and above 120 (assuming data entry error above 120)."
 food_usd <- subset(food_usd, age >= 18 & age <= 120)
 
 # B: State exclusion
+# Rule: "Keep only rows where the state is a valid two-letter US state abbreviation."
 us_states <- state.abb
 food_usd <- subset(food_usd, state %in% us_states)
 
 # C: Food expenditures
+# Rule: "Exclude any row where a food expenditure variable is missing, negative, or unreasonably large (>$2000 per week)."
 food_vars <- c("food_total", "food_grocery", "food_dining_out", "food_misc")
 for (v in food_vars) food_usd[[v]] <- as.numeric(as.character(food_usd[[v]]))
 food_usd <- subset(food_usd, 
@@ -231,19 +278,29 @@ food_usd <- subset(food_usd,
                    !is.na(food_misc) & food_misc >= 0 & food_misc < 2000)
 
 # D: Dining out times
+# Rule: "Exclude respondents who reported dining out a negative number of times, or more than 40 times in a week."
 food_usd$n_dined_out <- as.numeric(as.character(food_usd$n_dined_out))
 food_usd <- subset(food_usd, !is.na(n_dined_out) & n_dined_out >= 0 & n_dined_out <= 40)
 
 cat(sprintf("Final number of observations after cleaning: %d\n", nrow(food_usd)))
 ```
+Interpretation:
+After all data cleaning steps, the final number of clean, valid observations available for analysis is reported above.
 
 # Problem 3 - Collatz conjecture
 
 ##a
 
 ```{r}
+#' Return the next number in the Collatz sequence for a positive integer
+#'
+#' If n is even, returns n / 2; if n is odd, returns 3n + 1.
+#' Gives an error for invalid input (not a positive integer).
+#'
+#' @param n A single positive integer
+#' @return A positive integer (next Collatz step)
 nextCollatz <- function(n) {
-  # Input validation
+  # Input check: must be one positive integer
   if (length(n) != 1 || !is.numeric(n) || n != as.integer(n) || n < 1) {
     stop("Input must be a single positive integer.")
   }
@@ -257,13 +314,21 @@ nextCollatz <- function(n) {
 ```
 
 ```{r}
-nextCollatz(5)
-nextCollatz(16)
+# Demonstration: Examples from the instructions
+print(nextCollatz(5))   # Should print 16
+print(nextCollatz(16))  # Should print 8
 ```
 
 ##b
 
 ```{r}
+#' Return the Collatz sequence for a given positive integer as a vector,
+#' and also return its length in a list.
+#'
+#' @param n A single positive integer
+#' @return A list with:
+#'   $sequence: integer vector of the Collatz sequence from n to 1
+#'   $length: number of terms in the sequence
 collatzSequence <- function(n) {
   if (length(n) != 1 || !is.numeric(n) || n != as.integer(n) || n < 1) {
     stop("Input must be a single positive integer.")
@@ -278,6 +343,7 @@ collatzSequence <- function(n) {
 ```
 
 ```{r}
+# Demonstration: Examples from the instructions
 collatzSequence(5)
 collatzSequence(19)
 ```
@@ -295,9 +361,10 @@ for (i in seq_along(start_values)) {
 }
 
 seq_lengths <- sapply(100:500, function(n) collatzSequence(n)$length)
+
+# Identify min and max
 min_start <- which.min(seq_lengths) + 99
 max_start <- which.max(seq_lengths) + 99
-
 min_length <- seq_lengths[which.min(seq_lengths)]
 max_length <- seq_lengths[which.max(seq_lengths)]
 
