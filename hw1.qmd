@@ -12,10 +12,12 @@ Github: https://github.com/daisy6932/stats506
 
 ```{r}
 #First import: Read abalone data from the CVS file, with no header
-abalone <- read.csv("abalone.data", header = FALSE)
+data_file <- "abalone.data"
 # Assign column names based on the abalone.names file
-col_names(abalone) <- c("Sex", "Length", "Diameter", "Height", "Whole_weight", "Shucked_weight", "Viscera_weight", "Shell_weight", "Rings")
+col_names <- c("Sex", "Length", "Diameter", "Height", "Whole_weight",
+               "Shucked_weight", "Viscera_weight", "Shell_weight", "Rings")
 # Save the abalone data frame to an RDS file
+abalone <- read.csv(data_file, header = FALSE, col.names = col_names)
 saveRDS(abalone, file = "abalone.rds")
 # In a new R session or script: Quickly reload the abalone data frame from the RDS file
 abalone2 <- readRDS("abalone.rds")
@@ -28,8 +30,8 @@ abalone2 <- readRDS("abalone.rds")
 sex_counts <- table(abalone2$Sex)
 print(sex_counts)
 ```
-Interpretation:
-There are 1528 males, 1342 infants, and 1307 females in the dataset.
+
+Interpretation: There are 1528 males, 1342 infants, and 1307 females in the dataset.
 
 ## c.
 
@@ -48,8 +50,8 @@ max_corr_value <- correlations[max_corr_weight]
 
 cat(sprintf("The weight variable with the highest correlation with Rings is '%s' (correlation = %.3f).\n", max_corr_weight, max_corr_value))
 ```
-Interpretation:
-The variable Shell_weight has the highest correlation with Rings(correlation = 0.628). This suggests Shell_weight has the strongest linear relationship with the number of rings among the four weight measurements.
+
+Interpretation: The variable Shell_weight has the highest correlation with Rings(correlation = 0.628). This suggests Shell_weight has the strongest linear relationship with the number of rings among the four weight measurements.
 
 2.For that weight, which sex has the highest correlation?
 
@@ -60,7 +62,7 @@ sexes <- unique(abalone2$Sex)
 #For each sex, calculate the correlation between the most correlated weight and Rings
 cor_by_sex <- sapply(sexes, function(sex){
   idx <- abalone2$Sex == sex   
-  cor(abalone2[[most_correlated_weight]][idx], abalone2$Rings[idx])
+  cor(abalone2[[max_corr_weight]][idx], abalone2$Rings[idx])
 })
 
 #Name and print the correlation results according to sex
@@ -73,11 +75,11 @@ most_corr_sex_value <- cor_by_sex[most_corr_sex]
 
 cat(sprintf(
   "For '%s', the sex with the highest correlation with Rings is '%s' (correlation = %.3f).\n",
-  most_correlated_weight, most_corr_sex, most_corr_sex_value
+  max_corr_weight, most_corr_sex, most_corr_sex_value
 ))
 ```
-Interpretation:
-Among the three sexes, the correlation between Shell_weight and Rings is highest for group I, with a correlation of 0.725. This indicates that, for I, Shell_weight is especially closely related to the ring count.
+
+Interpretation: Among the three sexes, the correlation between Shell_weight and Rings is highest for group I, with a correlation of 0.725. This indicates that, for I, Shell_weight is especially closely related to the ring count.
 
 3.What are the weights of the abalone with the most rings?
 
@@ -100,8 +102,8 @@ for (i in seq_len(nrow(abalone_max))) {
   cat("\n")
 }
 ```
-Interpretation:
-Read out the actual weight values from the above table.
+
+Interpretation: Read out the actual weight values from the above table.
 
 4.What percentage of abalones have a viscera weight larger than their shell weight?
 
@@ -149,9 +151,8 @@ for (i in seq_along(sexes)) {
 cat("Correlation between abalone weights and rings, grouped by sex:\n")
 print(round(corr_table, 3))
 ```
-Interpretation:
-The table above shows the Pearson correlation coefficients between each weight measurement and the number of rings, calculated within each sex group. Rows correspond to sexes and columns to the four weight variables. Each cell indicates the strength and direction of the linear relationship between the given weight and rings, within that sex group.
-## e
+
+Interpretation: The table above shows the Pearson correlation coefficients between each weight measurement and the number of rings, calculated within each sex group. Rows correspond to sexes and columns to the four weight variables. Each cell indicates the strength and direction of the linear relationship between the given weight and rings, within that sex group. \## e
 
 ```{r}
 # Extract vectors for each sex
@@ -222,9 +223,8 @@ p_val_MI <- 2 * pt(-abs(t_stat_MI), df_MI)
 cat(sprintf("Manual t-test (Male vs Infant): t = %.3f, df = %.1f, p-value = %.4f\n", 
             t_stat_MI, df_MI, p_val_MI))
 ```
-Interpretation:
-The manual t-test calculations for Female vs Infant and Male vs Infant groups use the Welch’s formula for the t-statistic, degrees of freedom, and p-value. The results are consistent with R’s built-in t.test() function:
-For each pair, the t statistic, degrees of freedom, and p-value quantify if there is a statistically significant difference in the mean number of rings between the two groups. If the p-value is below 0.05, the difference is considered significant.
+
+Interpretation: The manual t-test calculations for Female vs Infant and Male vs Infant groups use the Welch’s formula for the t-statistic, degrees of freedom, and p-value. The results are consistent with R’s built-in t.test() function: For each pair, the t statistic, degrees of freedom, and p-value quantify if there is a statistically significant difference in the mean number of rings between the two groups. If the p-value is below 0.05, the difference is considered significant.
 
 # Problem 2 - Food Expenditure Data
 
@@ -284,8 +284,8 @@ food_usd <- subset(food_usd, !is.na(n_dined_out) & n_dined_out >= 0 & n_dined_ou
 
 cat(sprintf("Final number of observations after cleaning: %d\n", nrow(food_usd)))
 ```
-Interpretation:
-After all data cleaning steps, the final number of clean, valid observations available for analysis is reported above.
+
+Interpretation: After all data cleaning steps, the final number of clean, valid observations available for analysis is reported above.
 
 # Problem 3 - Collatz conjecture
 
